@@ -12,9 +12,9 @@ k3d image import log_output:1.0 -c k3s-default
 ```
 
 ## Create Deployment Resource
-Create a deployment via the kubectl command and specify the image built above:
+Create a deployment via the kubectl command:
 ```
-kubectl create deployment log-output --image=log_output:1.0
+kubectl apply -f ./manifests/deployment.yaml
 ```
 
 ## Check Deployment Status and Application Logs
