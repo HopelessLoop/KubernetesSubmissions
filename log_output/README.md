@@ -1,57 +1,74 @@
-# Deployment Process  
+# Log Output Application
 
-## Build Docker Image  
-Execute the following command in the root directory of the application to build an image tagged 1.0:  
-```  
-docker build . -t log_output:1.0  
-```  
-## Import Image to K3s Cluster  
-Import the locally built image into the K3s cluster (cluster name: k3s-default):
-```
-k3d image import log_output:1.0 -c k3s-default
-```
+This project is a containerized application designed to demonstrate a deployment workflow using **k3d**, **Docker**, and **Kubernetes**. It serves a web application that generates a timestamped UUID.
 
-## Create Deployment Resource
-Create a deployment via the kubectl command:
-```
-kubectl apply -f ./manifests/deployment.yaml
-```
+## Prerequisites
 
-## Check Deployment Status and Application Logs
+Before running this project, ensure you have the following tools installed on your machine:
 
-### Check Pod Running Status
+* [Docker](https://docs.docker.com/get-docker/)
+* [k3d](https://k3d.io/)
+* [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
-Execute the following command to confirm that the Pod related to log-output has started normally:
+## Getting Started
 
-```
-kubectl get pods
+Follow the steps below to set up the cluster, build the image, and deploy the application.
+
+### 1. Create a k3d Cluster
+
+Create a local Kubernetes cluster with 2 agent nodes and map the cluster's LoadBalancer port 80 to your local port 8081.
+
+```bash
+k3d cluster create -p 8081:80@loadbalancer --agents 2
 ```
 
-Expected Output Example (Pod name is dynamically generated, subject to the actual environment):
+### 2. Build the Docker Image
 
-```
-NAME                                 READY   STATUS    RESTARTS   AGE
-log-output-585b8c89bb-rqpxb          1/1     Running   0          26s
-```
+Build the application image using the local Dockerfile. We will tag this version as `1.1`.
 
-### View Application Logs
-
-Replace <your-pod-name> in the following command with the actual Pod name starting with "log-output" to view the application output logs:
-
-```
-kubectl logs -f <your-pod-name>
+```bash
+docker build -t log-output:1.1 .
 ```
 
-Example Command (based on the above output example):
+### 3. Import Image to k3d
+
+Since k3d runs in containers, it cannot access your local Docker daemon's images by default. Import the built image into the cluster named `k3s-default`.
+
+```bash
+k3d image import log-output:1.1 -c k3s-default
+```
+
+### 4. Deploy Manifests
+
+Apply the Kubernetes manifests (Deployment, Service, Ingress, etc.) located in the `manifests` folder.
+
+```bash
+kubectl apply -f ./manifests/
+```
+
+> **Note:** Please allow a few moments for the pods to initialize and reach the `Running` state. You can check the status using `kubectl get pods`.
+
+## Verification
+
+Once the deployment is successful, open your browser and visit:
 
 ```
-kubectl logs -f log-output-585b8c89bb-rqpxb
+http://localhost:8081
 ```
 
-# Notes
+### Expected Output
 
-- Pod names are dynamically generated. You need to obtain the actual name through the kubectl get pods command before replacing it.
+You should see a text output displaying the current timestamp and a random UUID, similar to the format below:
 
-- If the Pod status does not show Running, you can use kubectl describe pod <your-pod-name> to troubleshoot deployment issues.
+```text
+2025-12-17T12:20:59.684433923Z: c83747a5-ed83-4d3b-a29b-e1a184bf9ec9
 
-- The image tag (1.0) should be adjusted according to actual version requirements. Ensure the tag is consistent when importing into the cluster and creating the deployment.
+```
+
+## Cleanup
+
+To stop and remove the local cluster created for this project, run:
+
+```bash
+k3d cluster delete k3s-default
+```

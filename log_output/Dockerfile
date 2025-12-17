@@ -8,7 +8,7 @@ FROM golang:1.24-alpine AS builder
 WORKDIR /app
 
 # 1. 先拷贝依赖文件，利用 Docker 缓存层
-COPY go.mod ./
+COPY go.mod go.sum ./
 
 RUN go mod download
 
@@ -30,6 +30,11 @@ WORKDIR /usr/src/app
 
 # 从第一阶段拷贝编译好的二进制文件
 COPY --from=builder /app/myapp .
+
+ENV GIN_MODE=release
+ENV PORT=30881
+
+EXPOSE 30881
 
 # 启动命令
 CMD ["./myapp"]

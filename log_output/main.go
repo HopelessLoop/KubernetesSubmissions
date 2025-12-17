@@ -3,10 +3,11 @@ package main
 import (
 	"crypto/rand"
 	"fmt"
+	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 生成 UUID v4
@@ -20,10 +21,6 @@ func uuidV4() (string, error) {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16]), nil
 }
 
-func printTimeAndString(targetString string) {
-	fmt.Printf("%s: %s\n", time.Now().UTC().Format(time.RFC3339Nano), targetString)
-}
-
 func main() {
 	id, err := uuidV4()
 	if err != nil {
@@ -31,22 +28,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
+	// 启动后台协程每5秒输出一次
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
 
-	// 立即进行一次输出
-	printTimeAndString(id)
+		// 立即进行一次输出
+		fmt.Printf("%s: %s\n", time.Now().UTC().Format(time.RFC3339Nano), id)
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-ticker.C:
-			printTimeAndString(id)
-		case <-sigs:
-			// 优雅退出
-			return
+		for range ticker.C {
+			fmt.Printf("%s: %s\n", time.Now().UTC().Format(time.RFC3339Nano), id)
 		}
+	}()
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+
+	fmt.Printf("Server started in port %s\n", port)
+
+	// 创建Web服务器
+	r := gin.Default()
+
+	// 创建请求处理器
+	r.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "%s: %s", time.Now().UTC().Format(time.RFC3339Nano), id)
+	})
+
+	r.Run(":" + port)
 }
