@@ -31,10 +31,10 @@ WORKDIR /usr/src/app
 # 从第一阶段拷贝编译好的二进制文件
 COPY --from=builder /app/myapp .
 
+ENV PORT=8080
 ENV GIN_MODE=release
-ENV PORT=30881
 
-EXPOSE 30881
+EXPOSE 8080
 
 # 启动命令
 CMD ["./myapp"]

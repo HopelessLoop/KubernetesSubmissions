@@ -1,4 +1,4 @@
-module log_output
+module generator
 
 go 1.24.0
 

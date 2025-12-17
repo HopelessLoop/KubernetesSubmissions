@@ -12,6 +12,18 @@ spec:
       labels:
         app: log-output
     spec:
+      volumes: # Define volume
+        - name: shared-files
+          emptyDir: {}    
       containers:
-        - name: log-output
-          image: log-output:1.1
+        - name: log-output-generator
+          image: log-output-generator:1.0
+          volumeMounts:
+          - name: shared-files
+            mountPath: /usr/files   
+
+        - name: log-output-server
+          image: log-output-server:1.0
+          volumeMounts:
+          - name: shared-files
+            mountPath: /usr/files

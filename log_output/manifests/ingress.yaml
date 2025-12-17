@@ -12,4 +12,4 @@ spec:
           service:
             name: log-output-svc
             port:
-              number: 30881
+              number: 18080

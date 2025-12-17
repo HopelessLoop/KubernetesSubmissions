@@ -24,10 +24,11 @@ k3d cluster create -p 8081:80@loadbalancer --agents 2
 
 ### 2. Build the Docker Image
 
-Build the application image using the local Dockerfile. We will tag this version as `1.1`.
+Build the application image using the local Dockerfile. We will tag this version as `1.0`.
 
 ```bash
-docker build -t log-output:1.1 .
+docker build -t log-output-generator:1.0 ./src/generator
+docker build -t log-output-server:1.0 ./src/server
 ```
 
 ### 3. Import Image to k3d
@@ -35,7 +36,8 @@ docker build -t log-output:1.1 .
 Since k3d runs in containers, it cannot access your local Docker daemon's images by default. Import the built image into the cluster named `k3s-default`.
 
 ```bash
-k3d image import log-output:1.1 -c k3s-default
+k3d image import log-output-generator:1.0
+k3d image import log-output-server:1.0
 ```
 
 ### 4. Deploy Manifests
@@ -61,7 +63,7 @@ http://localhost:8081
 You should see a text output displaying the current timestamp and a random UUID, similar to the format below:
 
 ```text
-2025-12-17T12:20:59.684433923Z: c83747a5-ed83-4d3b-a29b-e1a184bf9ec9
+[2025-12-17T14:59:28Z] YmR8jNthoFPsZS3u
 
 ```
 
