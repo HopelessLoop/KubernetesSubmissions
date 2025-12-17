@@ -64,3 +64,22 @@ Once you have the pod name from the previous command, you can stream the applica
 ```bash
 kubectl logs -f <your-pod-name>
 ```
+
+### 6. Access the Application (Port Forwarding)
+
+To access the application running inside the Kubernetes cluster from your local machine, use `port-forward`.
+
+Use the pod name retrieved in Step 5 (e.g., `todo-app-dep-xxxxx-xxxxx`) to replace `<your-pod-name>` below:
+
+```bash
+kubectl port-forward <your-pod-name> 30880:30880
+```
+
+Once the forwarding is active, open your browser and visit: `http://localhost:30880`
+
+**Expected Output:**
+You should see the following JSON response:
+
+```json
+{"message":"Hello World"}
+```
