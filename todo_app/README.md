@@ -48,7 +48,7 @@ k3d image import todo_app:1.0 -c k3s-default
 Create a deployment in the cluster using the imported image.
 
 ```bash
-kubectl create deployment todo-app-dev --image=todo_app:1.0
+kubectl apply -f ./manifests/deployment.yaml
 ```
 
 ### 5. Verification & Logs
