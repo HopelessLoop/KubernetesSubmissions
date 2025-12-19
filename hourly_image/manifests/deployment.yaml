@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hourly-image
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hourly-image
+  template:
+    metadata:
+      labels:
+        app: hourly-image
+    spec:
+      volumes:
+        - name: hourly-image-pv
+          persistentVolumeClaim:
+            claimName: hourly-image-pvc
+      containers:
+        - name: hourly-image
+          image: hourly-image:1.0
+          volumeMounts:
+            - name: hourly-image-pv
+              mountPath: /usr/src/app/hourly-image-pv
+          env:
+            - name: IMAGE_PATH
+              value: "./hourly-image-pv/image.jpg"
+            - name: PORT
+              value: "8080"
+            - name: GIN_MODE
+              value: release
