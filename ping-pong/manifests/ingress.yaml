@@ -12,4 +12,4 @@ spec:
           service:
             name: ping-pong-svc
             port:
-              number: 30882
+              number: 18081

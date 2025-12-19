@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	filePath = "../../files/random_string.txt"
 	interval = 5 * time.Second
 )
 
@@ -22,16 +21,21 @@ func generateRandomString(n int) string {
 }
 
 func main() {
+	randomStringFilePath := os.Getenv("RANDOM_STRING_FILE_PATH")
+	if randomStringFilePath == "" {
+		randomStringFilePath = "./random_string.txt"
+	}
+
 	// Generate a random string at startup
 	randomStr := generateRandomString(16)
 	fmt.Printf("Generated random string: %s\n", randomStr)
-	fmt.Printf("Writing to %s every %s...\n", filePath, interval)
+	fmt.Printf("Writing to %s every %s...\n", randomStringFilePath, interval)
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		f, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(randomStringFilePath, os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Printf("Error opening file: %v\n", err)
 			continue

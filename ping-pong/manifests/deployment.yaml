@@ -12,6 +12,21 @@ spec:
       labels:
         app: ping-pong
     spec:
+      volumes:
+        - name: ping-pong-pv
+          persistentVolumeClaim:
+            claimName: ping-pong-pvc
+
       containers:
         - name: ping-pong
-          image: ping-pong:1.0
+          image: ping-pong:1.1
+          volumeMounts:
+            - name: ping-pong-pv
+              mountPath: /usr/src/app/ping-pong-pv
+          env:
+            - name: PING_PONG_FILE_PATH
+              value: "./ping-pong-pv/ping-pong.txt"
+            - name: PORT
+              value: "8080"
+            - name: GIN_MODE
+              value: release
