@@ -42,6 +42,13 @@ func main() {
 		c.String(200, fmt.Sprintf("pong %d", current))
 	})
 
+	r.GET("/pings", func(c *gin.Context) {
+		val := atomic.LoadInt64(&counter)
+		c.JSON(200, gin.H{
+			"pings": val,
+		})
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

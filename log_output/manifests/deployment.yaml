@@ -36,7 +36,7 @@ spec:
               value: "./random-string-dir/random_string.txt"
 
         - name: log-output-server
-          image: log-output-server:1.1
+          image: log-output-server:1.2
           volumeMounts:
             - name: shared-files
               mountPath: /usr/src/app/random-string-dir
@@ -47,6 +47,8 @@ spec:
               value: "./random-string-dir/random_string.txt"
             - name: PING_PONG_FILE_PATH
               value: "./ping-pong-pv/ping-pong.txt"
+            - name: PING_PONG_SERVER_ADDRESS
+              value: "http://ping-pong-svc:18081"
             - name: PORT
               value: "8080"
             - name: GIN_MODE

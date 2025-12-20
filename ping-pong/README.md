@@ -27,7 +27,7 @@ k3d cluster create -p 8081:80@loadbalancer --agents 2
 Build the application image using the local Dockerfile. We will tag this version as `1.1`.
 
 ```bash
-docker build -t ping-pong:1.0 .
+docker build -t ping-pong:1.2 .
 ```
 
 ### 3. Import Image to k3d
@@ -35,7 +35,7 @@ docker build -t ping-pong:1.0 .
 Since k3d runs in containers, it cannot access your local Docker daemon's images by default. Import the built image into the cluster named `k3s-default`.
 
 ```bash
-k3d image import ping-pong:1.0
+k3d image import ping-pong:1.2
 ```
 
 ### 4. Deploy Manifests

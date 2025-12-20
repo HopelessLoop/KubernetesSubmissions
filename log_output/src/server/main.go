@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -14,9 +16,14 @@ func main() {
 		randomStringFilePath = "./random_string.txt"
 	}
 
-	pingPongFilePath := os.Getenv("PING_PONG_FILE_PATH")
-	if pingPongFilePath == "" {
-		pingPongFilePath = "./ping-pong.txt"
+	// pingPongFilePath := os.Getenv("PING_PONG_FILE_PATH")
+	// if pingPongFilePath == "" {
+	// 	pingPongFilePath = "./ping-pong.txt"
+	// }
+
+	pingPongServerAddress := os.Getenv("PING_PONG_SERVER_ADDRESS")
+	if pingPongServerAddress == "" {
+		pingPongServerAddress = "http://ping-pong-svc:18081"
 	}
 
 	// 创建Web服务器
@@ -31,13 +38,30 @@ func main() {
 			return
 		}
 
-		pingPongs, err := os.ReadFile(pingPongFilePath)
-		if err != nil {
-			// 如果文件不存在，可能还没有ping-pong请求，默认为0或空
-			pingPongs = []byte("0")
+		// 尝试从 HTTP 服务获取
+		var pingCount string
+		resp, err := http.Get(pingPongServerAddress + "/pings")
+		if err == nil {
+			defer resp.Body.Close()
+			body, _ := io.ReadAll(resp.Body)
+			var result map[string]int64
+			if json.Unmarshal(body, &result) == nil {
+				pingCount = fmt.Sprintf("%d", result["pings"])
+			}
 		}
 
-		c.String(http.StatusOK, "%s\nPing / Pongs: %s", randomString, pingPongs)
+		// 如果 HTTP 获取失败，尝试从文件读取
+		// if pingCount == "" {
+		// 	pingPongs, err := os.ReadFile(pingPongFilePath)
+		// 	if err != nil {
+		// 		// 如果文件不存在，可能还没有ping-pong请求，默认为0或空
+		// 		pingCount = "0"
+		// 	} else {
+		// 		pingCount = string(pingPongs)
+		// 	}
+		// }
+
+		c.String(http.StatusOK, "%s\nPing / Pongs: %s", randomString, pingCount)
 	})
 
 	port := os.Getenv("PORT")

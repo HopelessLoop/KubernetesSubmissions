@@ -19,7 +19,7 @@ spec:
 
       containers:
         - name: ping-pong
-          image: ping-pong:1.1
+          image: ping-pong:1.2
           volumeMounts:
             - name: ping-pong-pv
               mountPath: /usr/src/app/ping-pong-pv
