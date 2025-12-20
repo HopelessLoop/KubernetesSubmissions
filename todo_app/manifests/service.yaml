@@ -1,14 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: todo-app-dep
+  name: todo-app-svc
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
-    app: todo-app # This is the app as declared in the deployment.
+    app: todo-app
   ports:
-    - name: http
-      nodePort: 30880 # This is the port that is available outside. Value for nodePort can be between 30000-32767
+    - port: 18082
       protocol: TCP
-      port: 20880 # This is a port that is available to the cluster, in this case it can be ~ anything
-      targetPort: 30880 # This is the target port
+      targetPort: 8080

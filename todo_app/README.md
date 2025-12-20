@@ -1,90 +1,68 @@
-# Todo App - K3d Deployment
+# Hourly Image Application
 
-This project is a Todo List application written in Go, containerized and configured for deployment on a local Kubernetes cluster using **K3d** (K3s in Docker).
+This project is a containerized application designed to demonstrate a deployment workflow using **k3d**, **Docker**, and **Kubernetes**. It serves a web application that generates a timestamped UUID.
 
 ## Prerequisites
 
-Before running the project, ensure you have the following tools installed:
+Before running this project, ensure you have the following tools installed on your machine:
 
-* [Docker](https://www.docker.com/)
-* [K3d](https://k3d.io/)
+* [Docker](https://docs.docker.com/get-docker/)
+* [k3d](https://k3d.io/)
 * [kubectl](https://kubernetes.io/docs/tasks/tools/)
 
-## Quick Start
+## Getting Started
 
-### 1. Create K3d Cluster with Port Mapping
+Follow the steps below to set up the cluster, build the image, and deploy the application.
 
-Since K3d runs Kubernetes nodes inside Docker containers, we must explicitly map the host machine's port to the K3s node's `NodePort`.
+### 1. Create a k3d Cluster
 
-* **Host Port**: `30880` (The port you will use in your browser).
-* **NodePort**: `30880` (Must match the `nodePort` defined in `service.yaml`).
-
-Run the following command to create the cluster and map the ports:
+Create a local Kubernetes cluster with 2 agent nodes and map the cluster's LoadBalancer port 80 to your local port 8081.
 
 ```bash
-# Creates a cluster named "todo-cluster"
-# Maps localhost:8081 -> K3d Container:30880
-k3d cluster create -p "30880:30880@server:0 --agents 2"
-
+k3d cluster create -p 8081:80@loadbalancer --agents 2
 ```
 
-### 2. Build and Import Image
+### 2. Build the Docker Image
 
-Since we are using a local Docker image (instead of pulling from a public registry like Docker Hub), you must import it into the cluster so K3s can access it.
+Build the application image using the local Dockerfile. We will tag this version as `1.1`.
 
 ```bash
-# 1. Build the image
-docker build -t todo-app:1.0 .
-
-# 2. Import the image into the K3d cluster
-k3d image import todo-app:1.0 -c k3s-default
+docker build -t todo_app:1.1 .
 ```
 
-### 3. Deploy Resources
+### 3. Import Image to k3d
 
-Apply the Kubernetes configurations. Ensure your `deployment.yaml` and `service.yaml` are in the current directory.
+Since k3d runs in containers, it cannot access your local Docker daemon's images by default. Import the built image into the cluster named `k3s-default`.
 
 ```bash
-# Apply the Deployment
-kubectl apply -f deployment.yaml
-
-# Apply the Service
-kubectl apply -f service.yaml
+k3d image import todo_app:1.1
 ```
 
-### 4. Verify and Access
+### 4. Deploy Manifests
 
-Check if the pods are running:
+Apply the Kubernetes manifests (Deployment, Service, Ingress, etc.) located in the `manifests` folder.
 
 ```bash
-kubectl get pods
-kubectl get svc
+kubectl apply -f ./manifests/
 ```
 
-Once the pod status is `Running`, access the application in your browser:
+> **Note:** Please allow a few moments for the pods to initialize and reach the `Running` state. You can check the status using `kubectl get pods`.
+
+## Verification
+
+Once the deployment is successful, open your browser and visit:
 
 ```
-http://localhost:30880
+http://localhost:8081/image
 ```
----
 
-## Port Configuration & Architecture
+### Expected Output
 
-Understanding the network flow is crucial for troubleshooting. The following table explains how traffic flows from your machine to the application container.
+You should see a image.
 
-| Component | Port | Description |
-| --- | --- | --- |
-| **Host Machine** | **30880** | Entry point for your browser/client. Mapped via `k3d create -p`. |
-| **Node (K3d)** | **30880** | The `nodePort` defined in `service.yaml`. The K3s node listens here. |
-| **Service** | **20880** | The `port` defined in `service.yaml`. Internal virtual port (ClusterIP). |
-| **Pod** | **30880** | The `targetPort` defined in `service.yaml`. The actual port the Go app listens on. |
+## Cleanup
 
-**Configuration Note:**
-If you change the port in your Go application code, you must update the `targetPort` in `service.yaml`. If you change the `nodePort` in `service.yaml`, you must recreate the K3d cluster with the updated `-p` mapping.
-
-## Clean Up
-
-To remove the cluster and release system resources:
+To stop and remove the local cluster created for this project, run:
 
 ```bash
 k3d cluster delete
