@@ -19,6 +19,12 @@ func main() {
 		log.Printf("IMAGE_PATH not set, using default: %s", imagePath)
 	}
 
+	todoBackendAddress := os.Getenv("TODO_BACKEND_ADDRESS")
+	if todoBackendAddress == "" {
+		todoBackendAddress = "http://todo-app-backend-svc:18083"
+		log.Printf("TODO_BACKEND_ADDRESS not set, using default: %s", todoBackendAddress)
+	}
+
 	// 2. 定义更新图片的函数
 	updateImage := func() {
 		log.Println("Starting image update...")
@@ -69,12 +75,60 @@ func main() {
 
 	// 5. 设置用于获取todo-app的路由
 	r.GET("/todo-app", func(c *gin.Context) {
-		html := `
+		html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Todo APP</title>
+    <script>
+        const backendUrl = "%s";
+
+        async function fetchTodos() {
+            try {
+                const response = await fetch(backendUrl + "/todos");
+                if (!response.ok) throw new Error('Failed to fetch');
+                const data = await response.json();
+                const list = document.getElementById('todo-list');
+                list.innerHTML = '';
+                if (data.todos) {
+                    data.todos.forEach(todo => {
+                        const li = document.createElement('li');
+                        li.textContent = todo;
+                        list.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching todos:', error);
+            }
+        }
+
+        async function createTodo() {
+            const input = document.getElementById('todo-input');
+            const item = input.value;
+            if (!item) return;
+
+            try {
+                const response = await fetch(backendUrl + "/todos", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ item: item }),
+                });
+                if (response.ok) {
+                    input.value = '';
+                    fetchTodos();
+                } else {
+                    console.error('Failed to create todo');
+                }
+            } catch (error) {
+                console.error('Error creating todo:', error);
+            }
+        }
+
+        window.onload = fetchTodos;
+    </script>
 </head>
 <body>
     <h1>Todo APP</h1>
@@ -84,18 +138,16 @@ func main() {
     
     <!-- 输入区域 -->
     <div>
-        <input type="text" maxlength="140" placeholder="Enter a todo (max 140 chars)">
-        <button type="button">Create todo</button>
+        <input id="todo-input" type="text" maxlength="140" placeholder="Enter a todo (max 140 chars)">
+        <button type="button" onclick="createTodo()">Create todo</button>
     </div>
 
     <!-- 待办事项列表 -->
-    <ul>
-        <li>Buy groceries</li>
-        <li>Walk the dog</li>
-        <li>Read a book</li>
+    <ul id="todo-list">
+        <!-- Items will be loaded here -->
     </ul>
 </body>
-</html>`
+</html>`, todoBackendAddress)
 		c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 	})
 
