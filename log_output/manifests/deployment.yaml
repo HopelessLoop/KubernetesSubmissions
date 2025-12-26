@@ -20,12 +20,20 @@ spec:
                 matchLabels:
                   app: ping-pong # k3d necessary
               topologyKey: kubernetes.io/hostname
+
       volumes: # Define volume
         - name: shared-files
           emptyDir: {}
         - name: ping-pong-pv
           persistentVolumeClaim:
             claimName: ping-pong-pvc
+        - name: log-output-config-volumn
+          configMap:
+            name: log-output-config
+            items:
+            - key: information.txt
+              path: information.txt
+
       containers:
         - name: log-output-generator
           image: log-output-generator:1.1
@@ -37,12 +45,15 @@ spec:
               value: "./random-string-dir/random_string.txt"
 
         - name: log-output-server
-          image: log-output-server:1.2
+          image: log-output-server:1.3
           volumeMounts:
             - name: shared-files
               mountPath: /usr/src/app/random-string-dir
             - name: ping-pong-pv
               mountPath: /usr/src/app/ping-pong-pv
+            - name: log-output-config-volumn
+              mountPath: /usr/src/app/config
+
           env:
             - name: RANDOM_STRING_FILE_PATH
               value: "./random-string-dir/random_string.txt"
@@ -54,3 +65,10 @@ spec:
               value: "8080"
             - name: GIN_MODE
               value: release
+            - name: CONFIG_DIR_PATH
+              value: "/usr/src/app/config"
+            - name: MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-config
+                  key: MESSAGE

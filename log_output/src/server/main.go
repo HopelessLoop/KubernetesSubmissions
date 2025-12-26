@@ -11,15 +11,20 @@ import (
 )
 
 func main() {
+	envMessage := os.Getenv("MESSAGE")
+	if envMessage == "" {
+		envMessage = "hello world"
+	}
+
+	configDirPath := os.Getenv("CONFIG_DIR_PATH")
+	if configDirPath == "" {
+		configDirPath = "./config"
+	}
+
 	randomStringFilePath := os.Getenv("RANDOM_STRING_FILE_PATH")
 	if randomStringFilePath == "" {
 		randomStringFilePath = "./random_string.txt"
 	}
-
-	// pingPongFilePath := os.Getenv("PING_PONG_FILE_PATH")
-	// if pingPongFilePath == "" {
-	// 	pingPongFilePath = "./ping-pong.txt"
-	// }
 
 	pingPongServerAddress := os.Getenv("PING_PONG_SERVER_ADDRESS")
 	if pingPongServerAddress == "" {
@@ -31,6 +36,13 @@ func main() {
 
 	// 创建请求处理器
 	r.GET("/", func(c *gin.Context) {
+		informationFile, err := os.ReadFile(configDirPath + "/information.txt")
+		if err != nil {
+			fmt.Printf("Error opening file: %v\n", err)
+			c.String(http.StatusInternalServerError, "Error opening file: %v", err)
+			return
+		}
+
 		randomString, err := os.ReadFile(randomStringFilePath)
 		if err != nil {
 			fmt.Printf("Error opening file: %v\n", err)
@@ -50,18 +62,8 @@ func main() {
 			}
 		}
 
-		// 如果 HTTP 获取失败，尝试从文件读取
-		// if pingCount == "" {
-		// 	pingPongs, err := os.ReadFile(pingPongFilePath)
-		// 	if err != nil {
-		// 		// 如果文件不存在，可能还没有ping-pong请求，默认为0或空
-		// 		pingCount = "0"
-		// 	} else {
-		// 		pingCount = string(pingPongs)
-		// 	}
-		// }
-
-		c.String(http.StatusOK, "%s\nPing / Pongs: %s", randomString, pingCount)
+		c.String(http.StatusOK,
+			"file content: %s\nenv variable: %s\n%s\nPing / Pongs: %s", informationFile, envMessage, randomString, pingCount)
 	})
 
 	port := os.Getenv("PORT")
