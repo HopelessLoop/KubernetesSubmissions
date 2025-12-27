@@ -1,49 +1,71 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"os"
-	"strconv"
-	"sync/atomic"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 )
 
-func loadCounter(filePath string) int64 {
-	data, err := os.ReadFile(filePath)
+func initDB(db *sql.DB) {
+	_, err := db.Exec("CREATE TABLE IF NOT EXISTS pings (id SERIAL PRIMARY KEY, count INT)")
 	if err != nil {
-		return 0
+		log.Fatal(err)
 	}
 
-	val, err := strconv.ParseInt(string(data), 10, 64)
+	var count int
+	err = db.QueryRow("SELECT count(*) FROM pings").Scan(&count)
 	if err != nil {
-		return 0
+		log.Fatal(err)
 	}
 
-	return val
-}
-
-func saveCounter(filePath string, val int64) {
-	os.WriteFile(filePath, []byte(fmt.Sprintf("%d", val)), 0644)
+	if count == 0 {
+		_, err = db.Exec("INSERT INTO pings (count) VALUES (0)")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func main() {
-	pingPongFilePath := os.Getenv("PING_PONG_FILE_PATH")
-	if pingPongFilePath == "" {
-		pingPongFilePath = "./ping-pong.txt"
+	postgresAddress := os.Getenv("POSTGRES_ADDRESS")
+	postgresUser := os.Getenv("POSTGRES_USER")
+	postgresPassword := os.Getenv("POSTGRES_PASSWORD")
+
+	if postgresAddress == "" {
+		log.Fatal("POSTGRES_ADDRESS environment variable required")
 	}
 
-	var counter int64 = loadCounter(pingPongFilePath)
+	connStr := fmt.Sprintf("postgres://%s:%s@%s/postgres?sslmode=disable", postgresUser, postgresPassword, postgresAddress)
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	initDB(db)
 
 	r := gin.Default()
 	r.GET("/pingpong", func(c *gin.Context) {
-		current := atomic.AddInt64(&counter, 1)
-		saveCounter(pingPongFilePath, current)
+		var current int
+		err := db.QueryRow("UPDATE pings SET count = count + 1 RETURNING count").Scan(&current)
+		if err != nil {
+			c.String(500, "Database error")
+			return
+		}
 		c.String(200, fmt.Sprintf("pong %d", current))
 	})
 
 	r.GET("/pings", func(c *gin.Context) {
-		val := atomic.LoadInt64(&counter)
+		var val int
+		err := db.QueryRow("SELECT count FROM pings LIMIT 1").Scan(&val)
+		if err != nil {
+			c.String(500, "Database error")
+			return
+		}
 		c.JSON(200, gin.H{
 			"pings": val,
 		})
