@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: todo-app-random-cornjob
+  namespace: project
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: todo-app-random
+            image: todo-app-random:1.0
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: "TODO_BACKEND_ADDRESS"
+                value: "http://todo-app-backend-svc:18083"
+          restartPolicy: OnFailure
