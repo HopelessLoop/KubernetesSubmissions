@@ -15,9 +15,21 @@ spec:
     spec:
       containers:
         - name: todo-app-backend
-          image: todo-app-backend:1.0
+          image: todo-app-backend:1.1
           env:
             - name: PORT
               value: "8080"
             - name: GIN_MODE
               value: release
+            - name: POSTGRES_ADDRESS
+              value: "postgres-stset-0.postgres-svc:5432"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: todo-app-backend-secret
+                  key: postgres_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: todo-app-backend-secret
+                  key: postgres_password

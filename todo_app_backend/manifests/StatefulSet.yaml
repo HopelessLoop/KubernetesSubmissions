@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: postgres-stset
-  namespace: exercises
+  namespace: project
 spec:
   serviceName: postgres-svc
   replicas: 1
@@ -24,7 +24,7 @@ spec:
 
           env:
             - name: POSTGRES_USER
-              value: pingpong
+              value: todoapp
             - name: POSTGRES_PASSWORD
               value: "123456"
 
