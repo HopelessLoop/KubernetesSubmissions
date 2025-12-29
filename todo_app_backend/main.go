@@ -71,6 +71,10 @@ func main() {
 				"message": "Format error",
 			})
 
+		} else if len(newTodo.Item) > 140 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"message": "Todo item too long (max 140 characters)",
+			})
 		} else {
 			_, err := db.Exec("INSERT INTO todos (item) VALUES ($1)", newTodo.Item)
 			if err != nil {
