@@ -27,7 +27,7 @@ spec:
             - name: IMAGE_PATH
               value: ./todo-app-pv/image.jpg
             - name: TODO_BACKEND_ADDRESS
-              value: http://localhost:8081
+              value: http://localhost
             - name: PORT
               value: "8080"
             - name: GIN_MODE
