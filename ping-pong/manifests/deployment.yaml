@@ -33,3 +33,11 @@ spec:
                 secretKeyRef:
                   name: pingpong-secret
                   key: postgres_password
+
+          # 数据库就绪探针配置
+          readinessProbe:
+            initialDelaySeconds: 10 # Initial delay until the readiness is tested
+            periodSeconds: 5 # How often to test
+            httpGet:
+               path: /pings
+               port: 8080

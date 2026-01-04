@@ -53,14 +53,27 @@ func main() {
 		// 尝试从 HTTP 服务获取
 		var pingCount string
 		resp, err := http.Get(pingPongServerAddress + "/pings")
-		if err == nil {
-			defer resp.Body.Close()
-			body, _ := io.ReadAll(resp.Body)
-			var result map[string]int64
-			if json.Unmarshal(body, &result) == nil {
-				pingCount = fmt.Sprintf("%d", result["pings"])
-			}
+		if err != nil {
+			fmt.Printf("Error fetching pings: %v\n", err)
+			c.String(http.StatusInternalServerError, "Error fetching pings: %v", err)
+			return
 		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Printf("Error reading response body: %v\n", err)
+			c.String(http.StatusInternalServerError, "Error reading response body: %v", err)
+			return
+		}
+
+		var result map[string]int64
+		if err := json.Unmarshal(body, &result); err != nil {
+			fmt.Printf("Error parsing json: %v\n", err)
+			c.String(http.StatusInternalServerError, "Error parsing json: %v", err)
+			return
+		}
+		pingCount = fmt.Sprintf("%d", result["pings"])
 
 		c.String(http.StatusOK,
 			"file content: %s\nenv variable: %s\n%s\nPing / Pongs: %s", informationFile, envMessage, randomString, pingCount)
