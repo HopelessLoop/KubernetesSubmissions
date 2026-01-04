@@ -35,6 +35,20 @@ func main() {
 
 	// 1. 初始化 Gin 引擎
 	r := gin.Default()
+	
+	// 存活探针，Gin框架正常运行证明存活
+	r.GET("/healthz", func(c *gin.Context) {
+        c.Status(http.StatusOK)
+    })
+
+	// 新增 /ready 路由用于健康检查
+	r.GET("/ready", func(c *gin.Context) {
+		if err := db.Ping(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"status": "database connection failed"})
+			return
+		}
+		c.Status(http.StatusOK)
+	})
 
 	// 2. 设置用于获取todo-app的路由
 	r.GET("/todos", func(c *gin.Context) {

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: todo-app-backend
-          image: todo-app-backend:1.2
+          image: todo-app-backend:1.3
           env:
             - name: PORT
               value: "8080"
@@ -33,3 +33,30 @@ spec:
                 secretKeyRef:
                   name: todo-app-backend-secret
                   key: postgres_password
+
+          # --- 1. 启动探针 (保镖) ---
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            # 关键策略：检测频率高，但允许失败次数多
+            periodSeconds: 2      # 每 2 秒查一次
+            failureThreshold: 30   # 最多允许失败 30 次
+
+          # --- 2. 存活探针 (日常巡逻) ---
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 2 # 加上超时设置，防止探针卡住
+
+          # --- 3. 就绪探针 (流量开关) ---
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2 # 加上超时设置，防止探针卡住
