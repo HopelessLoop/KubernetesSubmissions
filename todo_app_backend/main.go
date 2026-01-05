@@ -13,7 +13,9 @@ import (
 
 // 定义接收数据的结构体
 type Todo struct {
-	Item string `json:"item"`
+	ID        int    `json:"id"`
+	Item      string `json:"item"`
+	Completed bool   `json:"completed"`
 }
 
 func main() {
@@ -28,7 +30,8 @@ func main() {
 	}
 	defer db.Close()
 
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS todos (id SERIAL PRIMARY KEY, item TEXT)")
+	// 修改表结构，添加 completed 字段
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS todos (id SERIAL PRIMARY KEY, item TEXT, completed BOOLEAN DEFAULT FALSE)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,20 +55,20 @@ func main() {
 
 	// 2. 设置用于获取todo-app的路由
 	r.GET("/todos", func(c *gin.Context) {
-		rows, err := db.Query("SELECT item FROM todos")
+		rows, err := db.Query("SELECT id, item, completed FROM todos")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		defer rows.Close()
 
-		todoList := []string{}
+		todoList := []Todo{}
 		for rows.Next() {
-			var item string
-			if err := rows.Scan(&item); err != nil {
+			var t Todo
+			if err := rows.Scan(&t.ID, &t.Item, &t.Completed); err != nil {
 				continue
 			}
-			todoList = append(todoList, item)
+			todoList = append(todoList, t)
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -97,18 +100,18 @@ func main() {
 			}
 
 			// 获取最新列表
-			rows, err := db.Query("SELECT item FROM todos")
+			rows, err := db.Query("SELECT id, item, completed FROM todos")
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
 			defer rows.Close()
 
-			todoList := []string{}
+			todoList := []Todo{}
 			for rows.Next() {
-				var item string
-				rows.Scan(&item)
-				todoList = append(todoList, item)
+				var t Todo
+				rows.Scan(&t.ID, &t.Item, &t.Completed)
+				todoList = append(todoList, t)
 			}
 
 			c.JSON(http.StatusCreated, gin.H{
@@ -117,6 +120,17 @@ func main() {
 			})
 		}
 
+	})
+
+	// 4. 设置用于更新todo状态的路由
+	r.PUT("/todos/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		_, err := db.Exec("UPDATE todos SET completed = TRUE WHERE id = $1", id)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(http.StatusOK)
 	})
 
 	// 6. 启动服务

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: todo-app-backend
-          image: todo-app-backend:1.3
+          image: todo-app-backend:1.4
           env:
             - name: PORT
               value: "8080"

@@ -89,13 +89,27 @@ func main() {
                 const response = await fetch(backendUrl + "/todos");
                 if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();
-                const list = document.getElementById('todo-list');
-                list.innerHTML = '';
+                
+                const todoList = document.getElementById('todo-list');
+                const doneList = document.getElementById('done-list');
+                todoList.innerHTML = '';
+                doneList.innerHTML = '';
+
                 if (data.todos) {
                     data.todos.forEach(todo => {
                         const li = document.createElement('li');
-                        li.textContent = todo;
-                        list.appendChild(li);
+                        li.textContent = todo.item;
+                        
+                        if (todo.completed) {
+                            doneList.appendChild(li);
+                        } else {
+                            const button = document.createElement('button');
+                            button.textContent = 'Mark as done';
+                            button.onclick = () => markAsDone(todo.id);
+                            button.style.marginLeft = '10px';
+                            li.appendChild(button);
+                            todoList.appendChild(li);
+                        }
                     });
                 }
             } catch (error) {
@@ -127,6 +141,21 @@ func main() {
             }
         }
 
+        async function markAsDone(id) {
+            try {
+                const response = await fetch(backendUrl + "/todos/" + id, {
+                    method: 'PUT'
+                });
+                if (response.ok) {
+                    fetchTodos();
+                } else {
+                    console.error('Failed to mark as done');
+                }
+            } catch (error) {
+                console.error('Error marking as done:', error);
+            }
+        }
+
         window.onload = fetchTodos;
     </script>
 </head>
@@ -143,8 +172,14 @@ func main() {
     </div>
 
     <!-- 待办事项列表 -->
+    <h2>To Do</h2>
     <ul id="todo-list">
-        <!-- Items will be loaded here -->
+        <!-- Active items will be loaded here -->
+    </ul>
+
+    <h2>Done</h2>
+    <ul id="done-list">
+        <!-- Completed items will be loaded here -->
     </ul>
 </body>
 </html>`, todoBackendAddress)
